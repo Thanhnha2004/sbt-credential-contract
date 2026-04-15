@@ -37,22 +37,6 @@
         "type": "error"
     },
     {
-        "inputs": [],
-        "name": "ArrayLengthMismatch",
-        "type": "error"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "bytes32",
-                "name": "batchId",
-                "type": "bytes32"
-            }
-        ],
-        "name": "BatchAlreadyProcessed",
-        "type": "error"
-    },
-    {
         "inputs": [
             {
                 "internalType": "uint256",
@@ -137,48 +121,6 @@
         "type": "error"
     },
     {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "caller",
-                "type": "address"
-            }
-        ],
-        "name": "Unauthorized",
-        "type": "error"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": true,
-                "internalType": "bytes32",
-                "name": "batchId",
-                "type": "bytes32"
-            },
-            {
-                "indexed": false,
-                "internalType": "uint256[]",
-                "name": "tokenIds",
-                "type": "uint256[]"
-            },
-            {
-                "indexed": false,
-                "internalType": "uint256",
-                "name": "count",
-                "type": "uint256"
-            },
-            {
-                "indexed": false,
-                "internalType": "address",
-                "name": "issuedBy",
-                "type": "address"
-            }
-        ],
-        "name": "BatchIssued",
-        "type": "event"
-    },
-    {
         "anonymous": false,
         "inputs": [
             {
@@ -256,37 +198,6 @@
             },
             {
                 "indexed": false,
-                "internalType": "address",
-                "name": "reinstatedBy",
-                "type": "address"
-            },
-            {
-                "indexed": false,
-                "internalType": "uint256",
-                "name": "reinstatedAt",
-                "type": "uint256"
-            }
-        ],
-        "name": "DiplomaReinstated",
-        "type": "event"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": true,
-                "internalType": "uint256",
-                "name": "tokenId",
-                "type": "uint256"
-            },
-            {
-                "indexed": true,
-                "internalType": "address",
-                "name": "recipient",
-                "type": "address"
-            },
-            {
-                "indexed": false,
                 "internalType": "string",
                 "name": "reason",
                 "type": "string"
@@ -305,43 +216,6 @@
             }
         ],
         "name": "DiplomaRevoked",
-        "type": "event"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": true,
-                "internalType": "uint256",
-                "name": "tokenId",
-                "type": "uint256"
-            },
-            {
-                "indexed": true,
-                "internalType": "address",
-                "name": "recipient",
-                "type": "address"
-            },
-            {
-                "indexed": false,
-                "internalType": "string",
-                "name": "reason",
-                "type": "string"
-            },
-            {
-                "indexed": false,
-                "internalType": "address",
-                "name": "suspendedBy",
-                "type": "address"
-            },
-            {
-                "indexed": false,
-                "internalType": "uint256",
-                "name": "suspendedAt",
-                "type": "uint256"
-            }
-        ],
-        "name": "DiplomaSuspended",
         "type": "event"
     },
     {
@@ -500,227 +374,6 @@
         "inputs": [
             {
                 "internalType": "bytes32",
-                "name": "batchId",
-                "type": "bytes32"
-            },
-            {
-                "internalType": "address[]",
-                "name": "recipients",
-                "type": "address[]"
-            },
-            {
-                "internalType": "string[]",
-                "name": "studentIds",
-                "type": "string[]"
-            },
-            {
-                "internalType": "string[]",
-                "name": "studentNames",
-                "type": "string[]"
-            },
-            {
-                "internalType": "string[]",
-                "name": "degreeTitles",
-                "type": "string[]"
-            },
-            {
-                "internalType": "string[]",
-                "name": "ipfsCIDs",
-                "type": "string[]"
-            },
-            {
-                "internalType": "bytes32[]",
-                "name": "documentHashes",
-                "type": "bytes32[]"
-            },
-            {
-                "internalType": "uint256[]",
-                "name": "graduationYears",
-                "type": "uint256[]"
-            }
-        ],
-        "name": "batchIssueDiplomas",
-        "outputs": [
-            {
-                "internalType": "uint256[]",
-                "name": "tokenIds",
-                "type": "uint256[]"
-            }
-        ],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "bytes32",
-                "name": "documentHash",
-                "type": "bytes32"
-            }
-        ],
-        "name": "findByDocumentHash",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "tokenId",
-                "type": "uint256"
-            },
-            {
-                "internalType": "bool",
-                "name": "found",
-                "type": "bool"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "tokenId",
-                "type": "uint256"
-            }
-        ],
-        "name": "getDiploma",
-        "outputs": [
-            {
-                "components": [
-                    {
-                        "internalType": "uint256",
-                        "name": "tokenId",
-                        "type": "uint256"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "recipient",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "string",
-                        "name": "studentId",
-                        "type": "string"
-                    },
-                    {
-                        "internalType": "string",
-                        "name": "studentName",
-                        "type": "string"
-                    },
-                    {
-                        "internalType": "string",
-                        "name": "degreeTitle",
-                        "type": "string"
-                    },
-                    {
-                        "internalType": "string",
-                        "name": "institution",
-                        "type": "string"
-                    },
-                    {
-                        "internalType": "string",
-                        "name": "ipfsCID",
-                        "type": "string"
-                    },
-                    {
-                        "internalType": "bytes32",
-                        "name": "documentHash",
-                        "type": "bytes32"
-                    },
-                    {
-                        "internalType": "uint256",
-                        "name": "issuedAt",
-                        "type": "uint256"
-                    },
-                    {
-                        "internalType": "uint256",
-                        "name": "graduationYear",
-                        "type": "uint256"
-                    },
-                    {
-                        "internalType": "enum DiplomaRegistry.DiplomaStatus",
-                        "name": "status",
-                        "type": "uint8"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "issuedBy",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "string",
-                        "name": "remarks",
-                        "type": "string"
-                    }
-                ],
-                "internalType": "struct DiplomaRegistry.Diploma",
-                "name": "",
-                "type": "tuple"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "string",
-                "name": "studentId",
-                "type": "string"
-            }
-        ],
-        "name": "getDiplomasByStudentId",
-        "outputs": [
-            {
-                "internalType": "uint256[]",
-                "name": "",
-                "type": "uint256[]"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "wallet",
-                "type": "address"
-            }
-        ],
-        "name": "getDiplomasByWallet",
-        "outputs": [
-            {
-                "internalType": "uint256[]",
-                "name": "",
-                "type": "uint256[]"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "tokenId",
-                "type": "uint256"
-            }
-        ],
-        "name": "getRevocationReason",
-        "outputs": [
-            {
-                "internalType": "string",
-                "name": "",
-                "type": "string"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "bytes32",
                 "name": "role",
                 "type": "bytes32"
             }
@@ -786,25 +439,6 @@
                 "internalType": "string",
                 "name": "",
                 "type": "string"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "bytes32",
-                "name": "batchId",
-                "type": "bytes32"
-            }
-        ],
-        "name": "isBatchProcessed",
-        "outputs": [
-            {
-                "internalType": "bool",
-                "name": "",
-                "type": "bool"
             }
         ],
         "stateMutability": "view",
@@ -887,19 +521,6 @@
     {
         "inputs": [
             {
-                "internalType": "uint256",
-                "name": "tokenId",
-                "type": "uint256"
-            }
-        ],
-        "name": "reinstateDiploma",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
                 "internalType": "bytes32",
                 "name": "role",
                 "type": "bytes32"
@@ -971,155 +592,10 @@
         "type": "function"
     },
     {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "tokenId",
-                "type": "uint256"
-            },
-            {
-                "internalType": "string",
-                "name": "reason",
-                "type": "string"
-            }
-        ],
-        "name": "suspendDiploma",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "totalIssued",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
         "inputs": [],
         "name": "unpause",
         "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "string",
-                "name": "newName",
-                "type": "string"
-            }
-        ],
-        "name": "updateInstitutionName",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "tokenId",
-                "type": "uint256"
-            },
-            {
-                "internalType": "bytes32",
-                "name": "fileHash",
-                "type": "bytes32"
-            }
-        ],
-        "name": "verifyDiploma",
-        "outputs": [
-            {
-                "internalType": "bool",
-                "name": "isValid",
-                "type": "bool"
-            },
-            {
-                "internalType": "enum DiplomaRegistry.DiplomaStatus",
-                "name": "status",
-                "type": "uint8"
-            },
-            {
-                "components": [
-                    {
-                        "internalType": "uint256",
-                        "name": "tokenId",
-                        "type": "uint256"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "recipient",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "string",
-                        "name": "studentId",
-                        "type": "string"
-                    },
-                    {
-                        "internalType": "string",
-                        "name": "studentName",
-                        "type": "string"
-                    },
-                    {
-                        "internalType": "string",
-                        "name": "degreeTitle",
-                        "type": "string"
-                    },
-                    {
-                        "internalType": "string",
-                        "name": "institution",
-                        "type": "string"
-                    },
-                    {
-                        "internalType": "string",
-                        "name": "ipfsCID",
-                        "type": "string"
-                    },
-                    {
-                        "internalType": "bytes32",
-                        "name": "documentHash",
-                        "type": "bytes32"
-                    },
-                    {
-                        "internalType": "uint256",
-                        "name": "issuedAt",
-                        "type": "uint256"
-                    },
-                    {
-                        "internalType": "uint256",
-                        "name": "graduationYear",
-                        "type": "uint256"
-                    },
-                    {
-                        "internalType": "enum DiplomaRegistry.DiplomaStatus",
-                        "name": "status",
-                        "type": "uint8"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "issuedBy",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "string",
-                        "name": "remarks",
-                        "type": "string"
-                    }
-                ],
-                "internalType": "struct DiplomaRegistry.Diploma",
-                "name": "diploma",
-                "type": "tuple"
-            }
-        ],
-        "stateMutability": "view",
         "type": "function"
     }
 ]

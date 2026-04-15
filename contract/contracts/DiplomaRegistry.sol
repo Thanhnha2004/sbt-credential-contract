@@ -22,8 +22,7 @@ contract DiplomaRegistry is AccessControl, Pausable, ReentrancyGuard {
 
     enum DiplomaStatus {
         Active,
-        Revoked,
-        Suspended
+        Revoked
     }
 
     struct Diploma {
@@ -64,9 +63,6 @@ contract DiplomaRegistry is AccessControl, Pausable, ReentrancyGuard {
     // tokenId => revocation reason
     mapping(uint256 => string) private _revocationReasons;
 
-    // Batch issuance tracking
-    mapping(bytes32 => bool) private _processedBatches;
-
     // ============================================================
     //  EVENTS
     // ============================================================
@@ -91,28 +87,6 @@ contract DiplomaRegistry is AccessControl, Pausable, ReentrancyGuard {
         uint256 revokedAt
     );
 
-    event DiplomaSuspended(
-        uint256 indexed tokenId,
-        address indexed recipient,
-        string reason,
-        address suspendedBy,
-        uint256 suspendedAt
-    );
-
-    event DiplomaReinstated(
-        uint256 indexed tokenId,
-        address indexed recipient,
-        address reinstatedBy,
-        uint256 reinstatedAt
-    );
-
-    event BatchIssued(
-        bytes32 indexed batchId,
-        uint256[] tokenIds,
-        uint256 count,
-        address issuedBy
-    );
-
     // SBT Transfer Prevention - emit khi ai đó cố transfer
     event TransferAttemptBlocked(
         uint256 indexed tokenId,
@@ -124,7 +98,6 @@ contract DiplomaRegistry is AccessControl, Pausable, ReentrancyGuard {
     //  ERRORS
     // ============================================================
 
-    error Unauthorized(address caller);
     error DiplomaNotFound(uint256 tokenId);
     error DiplomaAlreadyRevoked(uint256 tokenId);
     error DiplomaNotActive(uint256 tokenId);
@@ -132,9 +105,7 @@ contract DiplomaRegistry is AccessControl, Pausable, ReentrancyGuard {
     error InvalidRecipient();
     error InvalidStudentId();
     error InvalidDocumentHash();
-    error BatchAlreadyProcessed(bytes32 batchId);
     error SoulboundTokenNonTransferable();
-    error ArrayLengthMismatch();
 
     // ============================================================
     //  MODIFIERS
@@ -272,115 +243,6 @@ contract DiplomaRegistry is AccessControl, Pausable, ReentrancyGuard {
         );
     }
 
-    /**
-     * @notice Cấp hàng loạt văn bằng (Batch Mint) - dùng cho BullMQ queue
-     * @param batchId  ID định danh batch (tránh xử lý trùng)
-     */
-    function batchIssueDiplomas(
-        bytes32 batchId,
-        address[] calldata recipients,
-        string[] calldata studentIds,
-        string[] calldata studentNames,
-        string[] calldata degreeTitles,
-        string[] calldata ipfsCIDs,
-        bytes32[] calldata documentHashes,
-        uint256[] calldata graduationYears
-    )
-        external
-        whenNotPaused
-        nonReentrant
-        onlyRole(ADMIN_ROLE)
-        returns (uint256[] memory tokenIds)
-    {
-        if (_processedBatches[batchId]) revert BatchAlreadyProcessed(batchId);
-
-        uint256 len = recipients.length;
-        if (
-            len != studentIds.length ||
-            len != studentNames.length ||
-            len != degreeTitles.length ||
-            len != ipfsCIDs.length ||
-            len != documentHashes.length ||
-            len != graduationYears.length
-        ) revert ArrayLengthMismatch();
-
-        tokenIds = new uint256[](len);
-
-        for (uint256 i = 0; i < len; i++) {
-            // Re-use single issue logic via internal call
-            tokenIds[i] = _issueInternal(
-                recipients[i],
-                studentIds[i],
-                studentNames[i],
-                degreeTitles[i],
-                ipfsCIDs[i],
-                documentHashes[i],
-                graduationYears[i],
-                ""
-            );
-        }
-
-        _processedBatches[batchId] = true;
-
-        emit BatchIssued(batchId, tokenIds, len, msg.sender);
-    }
-
-    /// @dev Internal issue để tái sử dụng trong batch
-    function _issueInternal(
-        address recipient,
-        string calldata studentId,
-        string calldata studentName,
-        string calldata degreeTitle,
-        string calldata ipfsCID,
-        bytes32 documentHash,
-        uint256 graduationYear,
-        string memory remarks
-    ) internal returns (uint256 tokenId) {
-        if (recipient == address(0)) revert InvalidRecipient();
-        if (bytes(studentId).length == 0) revert InvalidStudentId();
-        if (documentHash == bytes32(0)) revert InvalidDocumentHash();
-        if (_hashToTokenId[documentHash] != 0)
-            revert DuplicateDocument(
-                documentHash,
-                _hashToTokenId[documentHash]
-            );
-
-        _tokenIdCounter++;
-        tokenId = _tokenIdCounter;
-
-        _diplomas[tokenId] = Diploma({
-            tokenId: tokenId,
-            recipient: recipient,
-            studentId: studentId,
-            studentName: studentName,
-            degreeTitle: degreeTitle,
-            institution: institutionName,
-            ipfsCID: ipfsCID,
-            documentHash: documentHash,
-            issuedAt: block.timestamp,
-            graduationYear: graduationYear,
-            status: DiplomaStatus.Active,
-            issuedBy: msg.sender,
-            remarks: remarks
-        });
-
-        _studentDiplomas[studentId].push(tokenId);
-        _walletDiplomas[recipient].push(tokenId);
-        _hashToTokenId[documentHash] = tokenId;
-
-        emit DiplomaIssued(
-            tokenId,
-            recipient,
-            studentId,
-            studentName,
-            degreeTitle,
-            ipfsCID,
-            documentHash,
-            block.timestamp,
-            msg.sender
-        );
-    }
-
     // ============================================================
     //  CORE: THU HỒI BẰNG (BURN / REVOKE)
     // ============================================================
@@ -418,153 +280,6 @@ contract DiplomaRegistry is AccessControl, Pausable, ReentrancyGuard {
         );
     }
 
-    /**
-     * @notice Tạm đình chỉ văn bằng (Suspend) - có thể khôi phục
-     */
-    function suspendDiploma(
-        uint256 tokenId,
-        string calldata reason
-    )
-        external
-        whenNotPaused
-        nonReentrant
-        onlyRole(ADMIN_ROLE)
-        diplomaExists(tokenId)
-        onlyActive(tokenId)
-    {
-        _diplomas[tokenId].status = DiplomaStatus.Suspended;
-        _revocationReasons[tokenId] = reason;
-
-        emit DiplomaSuspended(
-            tokenId,
-            _diplomas[tokenId].recipient,
-            reason,
-            msg.sender,
-            block.timestamp
-        );
-    }
-
-    /**
-     * @notice Khôi phục văn bằng từ trạng thái Suspended
-     */
-    function reinstateDiploma(
-        uint256 tokenId
-    )
-        external
-        whenNotPaused
-        nonReentrant
-        onlyRole(ADMIN_ROLE)
-        diplomaExists(tokenId)
-    {
-        Diploma storage diploma = _diplomas[tokenId];
-
-        // Chỉ restore từ Suspended, không restore từ Revoked
-        require(
-            diploma.status == DiplomaStatus.Suspended,
-            "DiplomaRegistry: can only reinstate suspended diplomas"
-        );
-
-        diploma.status = DiplomaStatus.Active;
-        // Restore hash mapping
-        _hashToTokenId[diploma.documentHash] = tokenId;
-        delete _revocationReasons[tokenId];
-
-        emit DiplomaReinstated(
-            tokenId,
-            diploma.recipient,
-            msg.sender,
-            block.timestamp
-        );
-    }
-
-    // ============================================================
-    //  QUERY: TRA CỨU & XÁC THỰC
-    // ============================================================
-
-    /**
-     * @notice Lấy toàn bộ thông tin văn bằng theo tokenId
-     */
-    function getDiploma(
-        uint256 tokenId
-    ) external view diplomaExists(tokenId) returns (Diploma memory) {
-        return _diplomas[tokenId];
-    }
-
-    /**
-     * @notice Xác thực tính toàn vẹn của file PDF
-     * @param tokenId      ID văn bằng cần kiểm tra
-     * @param fileHash     Hash của file PDF do nhà tuyển dụng upload
-     * @return isValid     True nếu file khớp và bằng còn hiệu lực
-     * @return status      Trạng thái hiệu lực
-     * @return diploma     Thông tin văn bằng đầy đủ
-     */
-    function verifyDiploma(
-        uint256 tokenId,
-        bytes32 fileHash
-    )
-        external
-        view
-        diplomaExists(tokenId)
-        returns (bool isValid, DiplomaStatus status, Diploma memory diploma)
-    {
-        diploma = _diplomas[tokenId];
-        status = diploma.status;
-        isValid = (diploma.documentHash == fileHash &&
-            diploma.status == DiplomaStatus.Active);
-    }
-
-    /**
-     * @notice Tra cứu tokenId bằng hash của file PDF
-     * @dev Dùng cho public verification portal (nhà tuyển dụng kéo thả file)
-     */
-    function findByDocumentHash(
-        bytes32 documentHash
-    ) external view returns (uint256 tokenId, bool found) {
-        tokenId = _hashToTokenId[documentHash];
-        found = tokenId != 0;
-    }
-
-    /**
-     * @notice Lấy danh sách tokenId của một sinh viên theo mã SV
-     */
-    function getDiplomasByStudentId(
-        string calldata studentId
-    ) external view returns (uint256[] memory) {
-        return _studentDiplomas[studentId];
-    }
-
-    /**
-     * @notice Lấy danh sách tokenId theo địa chỉ ví
-     */
-    function getDiplomasByWallet(
-        address wallet
-    ) external view returns (uint256[] memory) {
-        return _walletDiplomas[wallet];
-    }
-
-    /**
-     * @notice Lý do thu hồi bằng
-     */
-    function getRevocationReason(
-        uint256 tokenId
-    ) external view diplomaExists(tokenId) returns (string memory) {
-        return _revocationReasons[tokenId];
-    }
-
-    /**
-     * @notice Tổng số văn bằng đã cấp
-     */
-    function totalIssued() external view returns (uint256) {
-        return _tokenIdCounter;
-    }
-
-    /**
-     * @notice Kiểm tra batch đã được xử lý chưa
-     */
-    function isBatchProcessed(bytes32 batchId) external view returns (bool) {
-        return _processedBatches[batchId];
-    }
-
     // ============================================================
     //  ADMIN: PAUSE / UNPAUSE
     // ============================================================
@@ -574,24 +289,5 @@ contract DiplomaRegistry is AccessControl, Pausable, ReentrancyGuard {
     }
     function unpause() external onlyRole(ADMIN_ROLE) {
         _unpause();
-    }
-
-    /**
-     * @notice Cập nhật tên trường (nếu cần thiết)
-     */
-    function updateInstitutionName(
-        string calldata newName
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        institutionName = newName;
-    }
-
-    // ============================================================
-    //  ERC-165 INTERFACE SUPPORT
-    // ============================================================
-
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view override(AccessControl) returns (bool) {
-        return super.supportsInterface(interfaceId);
     }
 }
